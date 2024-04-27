@@ -1,7 +1,9 @@
 import os
 import sys
 
-from app.ETL.extract import get_csv_data
+from app.ETL.extract import extract_csv_data
+from app.ETL.transform import transform_to_sql_list
+from app.ETL.load import create_sql_file
 from dotenv import load_dotenv
 
 
@@ -15,29 +17,9 @@ if not isinstance(SQL_FILE_NAME, str):
     sys.exit(1)
 
 load_dotenv()
+
 STORAGE_SQL_FILE_PATH = os.path.join(os.getenv('STORAGE_TRANSFORMED_DATA_PATH'), SQL_FILE_NAME)
 
-all_storage_extracted_data = []
-all_file_names = {}
-flat_files_index = 0
-for storage_file_name in os.listdir(os.getenv('STORAGE_FLAT_DATA_PATH')):
-    all_file_names[flat_files_index] = storage_file_name
-    flat_files_index += 1
-    storage_flat_data_path = os.path.join(os.getenv('STORAGE_FLAT_DATA_PATH'), storage_file_name)
-    if os.path.isfile(storage_flat_data_path):
-        all_storage_extracted_data.append(get_csv_data(storage_flat_data_path))
-
-sql_sentences = []
-table_index = 0
-for storage_extracted_data in all_storage_extracted_data:
-    for index, row in storage_extracted_data.iterrows():
-        columns = ', '.join(all_storage_extracted_data[table_index].columns.values)
-        values = ', '.join([f"'{value}'" if isinstance(value, str) else str(value) for value in row])
-        table_name = all_file_names[table_index].replace('.csv', '')
-        sentence = f"INSERT INTO {table_name} ( {columns} ) VALUES ({values});\n"
-        sql_sentences.append(sentence)
-    table_index += 1
-
-with open(STORAGE_SQL_FILE_PATH, 'w') as file:
-    sql_file_data = "".join(sql_sentences)
-    file.write(sql_file_data)
+all_storage_extracted_data = extract_csv_data(os.getenv('STORAGE_FLAT_DATA_PATH'))
+sql_sentences_list = transform_to_sql_list(all_storage_extracted_data)
+create_sql_file(STORAGE_SQL_FILE_PATH, sql_sentences_list)

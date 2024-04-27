@@ -6,13 +6,14 @@ def get_csv_data(csv_path):
     return pd.read_csv(csv_path)
 
 
-def extract_data():
-    for storage_file_name in os.listdir(os.getenv('STORAGE_FLAT_DATA_PATH')):
-        all_file_names = get_all_file_names(os.getenv('STORAGE_FLAT_DATA_PATH'))
-        flat_files_index += 1
-        storage_flat_data_path = os.path.join(os.getenv('STORAGE_FLAT_DATA_PATH'), storage_file_name)
+def extract_csv_data(path):
+    all_storage_extracted_data = []
+    for storage_file_name in os.listdir(path):
+        storage_flat_data_path = os.path.join(path, storage_file_name)
         if os.path.isfile(storage_flat_data_path):
             all_storage_extracted_data.append(get_csv_data(storage_flat_data_path))
+
+    return all_storage_extracted_data
 
 
 def get_all_file_names(path):
